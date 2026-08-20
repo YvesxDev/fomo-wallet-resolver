@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta
+      name="description"
+      content="Resolve a FOMO profile or Solana wallet to its linked wallets locally."
+    />
+    <title>FOMO Wallet Resolver</title>
+    <link rel="stylesheet" href="/app.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="title">
+          <h1>FOMO Wallet Resolver</h1>
+          <p>Resolve a username, profile URL, or Solana wallet</p>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <section class="panel auth-panel" aria-labelledby="connect-title">
+          <div class="panel-heading">
+            <span class="step">01</span>
+            <div>
+              <h2 id="connect-title">Connect FOMO</h2>
+              <p>Required for usernames and profiles only</p>
+            </div>
+            <span id="auth-status" class="status status-idle">Not connected</span>
+          </div>
+
+          <p class="connect-note">
+            Follow these steps in order. Only click <strong>Paste auth</strong> after the
+            FOMO console says <strong>“fresh auth copied”</strong>
+          </p>
+
+          <ol class="connect-steps">
+            <li>
+              <span>1</span>
+              <div>
+                <strong>Copy the helper</strong>
+                <small>Click Copy helper to place the console script on your clipboard</small>
+              </div>
+              <button id="copy-helper" class="button button-secondary" type="button">
+                Copy helper
+              </button>
+            </li>
+            <li>
+              <span>2</span>
+              <div>
+                <div class="step-title">
+                  <strong>Run it inside FOMO</strong>
+                  <span class="console-help">
+                    <a
+                      class="console-help-trigger"
+                      href="/console-guide.png"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Open a successful Console example in a new tab"
+                      aria-describedby="console-preview"
+                    >
+                      i
+                    </a>
+                    <span id="console-preview" class="console-preview" role="tooltip">
+                      <a
+                        class="console-preview-link"
+                        href="/console-guide.png"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Open this Console example in a new tab"
+                      >
+                        <img
+                          src="/console-guide.png"
+                          alt="Chrome DevTools Console after the browser helper reports fresh auth copied"
+                        />
+                      </a>
+                    </span>
+                  </span>
+                </div>
+                <small>
+                  Log in, open DevTools → Console, paste, press Enter, then wait for
+                  “fresh auth copied”
+                </small>
+              </div>
+              <button id="open-fomo" class="button button-secondary" type="button">
+                Open FOMO
+              </button>
+            </li>
+            <li>
+              <span>3</span>
+              <div>
+                <strong>Return here and connect</strong>
+                <small>Click Paste auth, the status above should change to Connected</small>
+              </div>
+              <button id="paste-auth" class="button button-primary" type="button">
+                Paste auth
+              </button>
+            </li>
+          </ol>
+
+          <div class="auth-controls">
+            <button
+              id="refresh-auth"
+              class="button button-secondary"
+              type="button"
+              disabled
+            >
+              Refresh now
+            </button>
+            <label class="auto-refresh" for="auto-refresh">
+              <input id="auto-refresh" type="checkbox" checked />
+              <span>Auto refresh 5 minutes before expiry</span>
+            </label>
+          </div>
+
+          <div id="auth-message" class="message" role="status" aria-live="polite"></div>
+        </section>
+
+        <section class="panel resolve-panel" aria-labelledby="resolve-title">
+          <div class="panel-heading">
+            <span class="step">02</span>
+            <div>
+              <h2 id="resolve-title">Resolve wallets</h2>
+              <p>Use a FOMO profile or paste a Solana wallet</p>
+            </div>
+          </div>
+
+          <form id="resolve-form">
+            <label for="profile-input">Username, profile, or Solana wallet</label>
+            <div class="resolve-input-row">
+              <input
+                id="profile-input"
+                name="profile"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="ExampleHandle or Solana address"
+                required
+              />
+              <button id="resolve-button" class="button button-resolve" type="submit">
+                Resolve wallets
+              </button>
+            </div>
+
+            <details class="advanced" open>
+              <summary>Connection settings</summary>
+              <div class="advanced-fields">
+                <label for="rpc-input">Solana RPC URL</label>
+                <input
+                  id="rpc-input"
+                  name="rpc"
+                  type="url"
+                  value="https://api.mainnet-beta.solana.com"
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+            </details>
+          </form>
+
+          <div id="resolve-message" class="message" role="status" aria-live="polite"></div>
+
+          <article id="result" class="result" hidden>
+            <div class="wallet-result">
+              <div class="result-label">Solana wallet</div>
+              <div class="wallet-row">
+                <code id="solana-wallet"></code>
+                <button id="copy-solana-wallet" class="copy-button" type="button">
+                  Copy
+                </button>
+              </div>
+            </div>
+            <div class="wallet-result">
+              <div class="result-label">EVM wallet</div>
+              <div class="wallet-row">
+                <code id="evm-wallet"></code>
+                <button id="copy-evm-wallet" class="copy-button" type="button">
+                  Copy
+                </button>
+              </div>
+              <p id="evm-unavailable" class="wallet-note" hidden></p>
+            </div>
+            <div class="result-meta">
+              <span id="total-time"></span>
+            </div>
+            <div id="timing-grid" class="timing-grid" aria-label="Resolution timing">
+              <div id="profile-timing"><small>Profile</small><strong id="profile-time">–</strong></div>
+              <div id="builder-timing"><small>Builder</small><strong id="builder-time">–</strong></div>
+              <div id="rpc-timing"><small>RPC</small><strong id="rpc-time">–</strong></div>
+              <div id="decode-timing"><small>Decode</small><strong id="decode-time">–</strong></div>
+              <div><small>EVM</small><strong id="evm-time">–</strong></div>
+            </div>
+          </article>
+        </section>
+      </div>
+
+    </main>
+  </body>
+</html>
